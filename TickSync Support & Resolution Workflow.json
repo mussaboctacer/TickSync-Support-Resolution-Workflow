@@ -1,0 +1,819 @@
+{
+  "name": "TickSync Support & Resolution Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/support",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        80
+      ],
+      "id": "0abbd83e-3420-4d8d-97f9-0235d477ad39",
+      "name": "Webhook",
+      "webhookId": "afbe04cf-819e-4471-a322-8b90cd53325c"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1fm4glkBxRxLm6wV1GwvFV4uZn3nXos46B2m402Q369w/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 610816848,
+          "mode": "list",
+          "cachedResultName": "Activity_Log.csv",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fm4glkBxRxLm6wV1GwvFV4uZn3nXos46B2m402Q369w/edit#gid=610816848"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        176
+      ],
+      "id": "fa862512-35ef-455b-9e3c-95cd152ccaa7",
+      "name": "Read Ticket Tracking",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XHOzlbsjDmj4yXcW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const isDuplicate = false;\nreturn [{ json: { isDuplicate: isDuplicate } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -16
+      ],
+      "id": "2a3f92aa-3f6e-4bb3-93b0-bb297c426f7d",
+      "name": "Check Duplicate Logic"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7caf12cd-50ee-4f90-b081-391000056607",
+              "leftValue": "={{ $json.isDuplicate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        464,
+        -16
+      ],
+      "id": "9a89ec58-d2d9-4343-aa76-b2a5523710ee",
+      "name": "is Duplicate?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c2256a7a-7f6c-4a6c-9a4d-c20d9b70ef9c",
+              "name": "contact_email",
+              "value": "={{ $node[\"Validate Input\"].json.customer_email }}",
+              "type": "string"
+            },
+            {
+              "id": "99c77c1d-a387-4f04-87b1-4624e35dd3e2",
+              "name": "issue_title",
+              "value": "={{ $node[\"Validate Input\"].json.issue_summary }}",
+              "type": "string"
+            },
+            {
+              "id": "d5e93c72-5f5b-4c8e-9ec0-aa2359bfd778",
+              "name": "issue_details",
+              "value": "={{ $node[\"Validate Input\"].json.issue_detail }}",
+              "type": "string"
+            },
+            {
+              "id": "7410f12a-638b-4459-86e2-7a6860d92929",
+              "name": "priority",
+              "value": "={{ $node[\"Validate Input\"].json.urgency === 'critical' ? 'urgent' : $node[\"Validate Input\"].json.urgency }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        688,
+        -16
+      ],
+      "id": "1982c4e0-be05-4095-b5ed-f981091d3e9b",
+      "name": "Map Data for API"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bcfcb527-8265-4b77-b0db-2864677b06f2",
+              "name": "customer_email",
+              "value": "={{ $json.customer_email }}",
+              "type": "string"
+            },
+            {
+              "id": "4af5fa59-d543-4539-8f9b-d548cf13084d",
+              "name": "issue_summary",
+              "value": "={{ $json.issue_summary }}",
+              "type": "string"
+            },
+            {
+              "id": "56030225-9f45-46bd-bf2d-afc5e74276d4",
+              "name": "issue_detail",
+              "value": "={{ $json.issue_detail }}",
+              "type": "string"
+            },
+            {
+              "id": "da48885d-b526-42c6-8344-c0de9653fd26",
+              "name": "urgency",
+              "value": "={{ $json.urgency }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        16,
+        80
+      ],
+      "id": "849a5cf9-54f8-4aa1-8008-977355dad02f",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contact_email\": \"{{ $json.contact_email }}\",\n  \"issue_title\": \"{{ $json.issue_title }}\",\n  \"issue_details\": \"{{ $json.issue_details }}\",\n  \"priority\": \"{{ $json.priority }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        912,
+        -16
+      ],
+      "id": "96f43e4c-99a6-4dbc-afe5-af6165ba59dc",
+      "name": "Create Ticket - TickSync API"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w",
+          "mode": "list",
+          "cachedResultName": "Ticket_Tracking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 768171965,
+          "mode": "list",
+          "cachedResultName": "Ticket_Tracking.csv",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w/edit#gid=768171965"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ new Date().toISOString() }}",
+            "CustomerEmail": "={{ $json.json.contact_email }}",
+            "IssueSummary": "={{ $json.json.issue_title }}",
+            "IssueDetail": "={{ $json.json.issue_details }}",
+            "Urgency": "={{ $json.json.priority }}",
+            "TicketID": "={{ $json.json.contact_email }}",
+            "Status": "Created"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CustomerEmail",
+              "displayName": "CustomerEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IssueSummary",
+              "displayName": "IssueSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IssueDetail",
+              "displayName": "IssueDetail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TicketID",
+              "displayName": "TicketID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        80
+      ],
+      "id": "f7304acd-a854-47c8-8549-050212081289",
+      "name": "Append to Ticket Tracking",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XHOzlbsjDmj4yXcW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.json.contact_email }}",
+        "subject": "Confirmation: Ticket Created - Support Request",
+        "emailType": "text",
+        "message": "=Hello,  Your support ticket has been created successfully!  Ticket Details: - Summary: {{ $json.json.issue_title }} - Description: {{ $json.json.issue_details }} - Priority: {{ $json.json.priority }} - Customer Email: {{ $json.json.contact_email }}  We will get back to you soon.  Best regards, TickSync Support Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        -112
+      ],
+      "id": "4d83a84d-a897-41bb-abd8-4efd45d31271",
+      "name": "Send a message",
+      "webhookId": "670aa3e1-80ec-4167-ab27-2bb0d567390c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IQquCJoYP4glz2cy",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        400
+      ],
+      "id": "b08d82e5-8964-43a3-bad5-3be0082c90bc",
+      "name": "Error Handler"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1uGTbAYAWFXiW8NBESCZ3wNR13I1qERt8CnmicD8OxzA",
+          "mode": "list",
+          "cachedResultName": "Error_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uGTbAYAWFXiW8NBESCZ3wNR13I1qERt8CnmicD8OxzA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 204124569,
+          "mode": "list",
+          "cachedResultName": "Error_Log.csv",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uGTbAYAWFXiW8NBESCZ3wNR13I1qERt8CnmicD8OxzA/edit#gid=204124569"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ErrorTimestamp",
+              "displayName": "ErrorTimestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ErrorCode",
+              "displayName": "ErrorCode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ErrorMessage",
+              "displayName": "ErrorMessage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payload",
+              "displayName": "Payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        16,
+        400
+      ],
+      "id": "97ec070d-64ef-475d-b806-ec416055af7e",
+      "name": "Log Error to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XHOzlbsjDmj4yXcW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@ticksync.local",
+        "toEmail": "admin@ticksync.local",
+        "subject": "ALERT: TickSync Ticket Creation Failed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        400
+      ],
+      "id": "ac0c2a61-ab73-4668-8008-5f89e8138b2b",
+      "name": "Send Admin Alert",
+      "webhookId": "325bc287-fda3-4eab-9bea-c67ecea83f1a",
+      "credentials": {
+        "smtp": {
+          "id": "JYHI7pwrAdi2NyP0",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/resolution",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        624
+      ],
+      "id": "0ee8243c-486c-4d8a-87a9-a2422f931f13",
+      "name": "Webhook - Resolution Request",
+      "webhookId": "7e164623-2e2e-4623-9f3f-36b8abecaf9c"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HMAC Secret key\nconst secret = 'super-secret-key-2025';\n\n// Webhook se data lo\nconst ticketId = $json.ticket_id;\nconst newStatus = $json.new_status;\nconst resolvedAt = $json.resolved_at;\nconst receivedSignature = $json.signature;\n\n// String banao jo signature ke liye use hoga\nconst message = `${ticketId}|${newStatus}|${resolvedAt}`;\n\n// HMAC_SHA256 calculate karo\nconst crypto = require('crypto');\nconst computedSignature = crypto\n  .createHmac('sha256', secret)\n  .update(message)\n  .digest('hex');\n\n// Compare karo\nconst isValid = computedSignature === receivedSignature;\n\n// Return result\nreturn {\n  isValid: isValid,\n  computedSignature: computedSignature,\n  receivedSignature: receivedSignature,\n  message: message\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        624
+      ],
+      "id": "8eb9e54d-9530-4c03-96b7-bfa52f9c35c7",
+      "name": "Validate HMAC Signature"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2a0cdfde-5f31-4b79-af1e-ecda41b4a4a4",
+              "leftValue": "=$json.isValid",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        624
+      ],
+      "id": "b7d2cb93-89ac-4f64-9b91-99c5449c5dc2",
+      "name": "Is Signature Valid?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w",
+          "mode": "list",
+          "cachedResultName": "Ticket_Tracking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 768171965,
+          "mode": "list",
+          "cachedResultName": "Ticket_Tracking.csv",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yUF5CoBdYEKCSF5sdYfF46UbBJSNoX-XapocZh8US_w/edit#gid=768171965"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CustomerEmail",
+              "displayName": "CustomerEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IssueSummary",
+              "displayName": "IssueSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IssueDetail",
+              "displayName": "IssueDetail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TicketID",
+              "displayName": "TicketID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        624
+      ],
+      "id": "13546eab-0849-4c5d-8739-52431f3c5462",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XHOzlbsjDmj4yXcW",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "customer_email": "ali@example.com",
+          "issue_summary": "Login not working",
+          "issue_detail": "Cannot login since morning",
+          "urgency": "high"
+        }
+      }
+    ],
+    "Webhook - Resolution Request": [
+      {
+        "json": {
+          "ticket_id": "TICKET-001",
+          "new_status": "Resolved",
+          "resolved_at": "2026-10-06T14:00:00Z",
+          "signature": "abc123def456"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ticket Tracking": {
+      "main": [
+        []
+      ]
+    },
+    "Check Duplicate Logic": {
+      "main": [
+        [
+          {
+            "node": "is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is Duplicate?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Map Data for API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Read Ticket Tracking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Duplicate Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Data for API": {
+      "main": [
+        [
+          {
+            "node": "Create Ticket - TickSync API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ticket - TickSync API": {
+      "main": [
+        [
+          {
+            "node": "Append to Ticket Tracking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Ticket Tracking": {
+      "main": [
+        []
+      ]
+    },
+    "Error Handler": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Send Admin Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Resolution Request": {
+      "main": [
+        [
+          {
+            "node": "Validate HMAC Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate HMAC Signature": {
+      "main": [
+        [
+          {
+            "node": "Is Signature Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Signature Valid?": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f55c0bce-5fc9-4881-8816-9a6d228e40ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a82b0d193238767645097e6e3d3ce28516194bba76da1130b43b125d0036de13"
+  },
+  "nodeGroups": [],
+  "id": "oe4MIuxaZL5nyHzY",
+  "tags": []
+}
